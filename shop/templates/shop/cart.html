@@ -1,0 +1,35 @@
+{% extends 'shop/base.html' %}
+{% block content %}
+<h2>Your Cart</h2>
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="promo_code" class="form-label">Promo Code</label>
+        <input type="text" name="promo_code" id="promo_code" class="form-control" placeholder="Enter promo code">
+        <button type="submit" class="btn btn-outline-primary mt-2">Apply</button>
+    </div>
+</form>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in cart_items %}
+        <tr>
+            <td>{{ item.product.name }} ({{ item.product.volume }}ml)</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.product.price }}</td>
+            <td>${{ item.subtotal }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<p>Total: ${{ total }}</p>
+<p>Final Total (after discounts): ${{ final_total }}</p>
+<a href="{% url 'checkout' %}" class="btn btn-success">Checkout</a>
+{% endblock %}
