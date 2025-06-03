@@ -1,4 +1,4 @@
-from django.db.models import F, Value
+from django.db.models import F, Value, Q
 from django.http import request
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
@@ -20,15 +20,15 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            role = request.POST.get('role', 'Customer')
-            group = Group.objects.get(name=role + 's')
-            user.groups.add(group)
+            print(f"User {user.username} saved successfully!")  # Отладка
             login(request, user)
-            messages.success(request, f"Welcome, {user.username}!")
             return redirect('product_list')
+        else:
+            print(form.errors)  # Вывод ошибок
     else:
         form = UserCreationForm()
     return render(request, 'shop/register.html', {'form': form})
+
 
 def product_list(request):
     products = Product.objects.all()
@@ -185,16 +185,3 @@ def manage_products(request):
 def order_success(request):
     return render(request, 'shop/order_success.html')
 
-def register(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            print(f"User {user.username} saved successfully!")  # Отладка
-            login(request, user)
-            return redirect('product_list')
-        else:
-            print(form.errors)  # Вывод ошибок
-    else:
-        form = UserCreationForm()
-    return render(request, 'shop/register.html', {'form': form})
