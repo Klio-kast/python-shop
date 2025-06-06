@@ -118,9 +118,10 @@ def get_product_discount(product):
         discount_type='product',
         start_date__lte=now,
         end_date__gte=now,
-        uses__lt=models.F('max_uses') if models.F('max_uses') else models.Value(999999)
     ).filter(
-        models.Q(products=product) | models.Q(categories=product.category) | models.Q(brands=product.brand)
+        Q(max_uses__isnull=True) | Q(uses__lt=F('max_uses'))
+    ).filter(
+        Q(products=product) | Q(categories=product.category) | Q(brands=product.brand)
     )
     return max(discounts, key=lambda d: d.value, default=None)
 
@@ -149,24 +150,30 @@ def get_order_discount(cart_items_or_order):
             best_discount = d
     return max_value if best_discount else None
 
+
 def apply_promo_code(code, total, cart_items):
-    from django.db import models
     now = timezone.now()
     try:
-        discount = Discount.objects.get(
+        discount = Discount.objects.filter(
             code=code,
             discount_type='promo',
             start_date__lte=now,
             end_date__gte=now,
-            uses__lt=models.F('max_uses') if models.F('max_uses') else models.Value(999999)
-        )
-        items_count = sum(item['quantity'] for item in cart_items)
-        if (discount.min_order_value and total < discount.min_order_value) or (discount.min_items and items_count < discount.min_items):
+        ).filter(
+            Q(max_uses__isnull=True) | Q(uses__lt=F('max_uses'))
+        ).first()
+
+        if not discount:
             return None
+
+        items_count = sum(item['quantity'] for item in cart_items)
+        if (discount.min_order_value and total < discount.min_order_value) or (
+                discount.min_items and items_count < discount.min_items):
+            return None
+
         value = discount.value if discount.value_type == 'fixed' else total * discount.value / 100
         discount.uses += 1
         discount.save()
-        request.session['promo_code'] = code
         return value
     except Discount.DoesNotExist:
         return None

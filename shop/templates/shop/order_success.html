@@ -1,0 +1,21 @@
+{% extends 'shop/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="mb-4">Order Successful!</h1>
+            <div class="alert alert-success" role="alert">
+                <i class="bi bi-check-circle-fill"></i>
+                <h4 class="alert-heading">Thank you for your order!</h4>
+                <p>Your order has been placed successfully.</p>
+                <hr>
+                <p class="mb-0">Order ID: #{{ order.id|default:"N/A" }}</p>
+            </div>
+            <a href="{% url 'product_list' %}" class="btn btn-primary mt-3">
+                Continue Shopping
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
