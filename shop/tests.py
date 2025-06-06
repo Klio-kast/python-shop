@@ -1,3 +1,4 @@
+from django.template.loader import render_to_string
 from django.test import TestCase, Client, RequestFactory
 from django.urls import reverse
 from django.contrib.auth.models import User, Group
@@ -19,6 +20,13 @@ from shop import views
 from django.test import TestCase
 from django.contrib.auth.models import User, Group, AnonymousUser
 from shop.templatetags.shop_tags import has_group
+from django.test import TestCase
+from django.urls import reverse
+from django.template import Template, Context
+from django.contrib.auth.models import User
+from shop.models import Order
+from datetime import datetime
+from decimal import Decimal
 
 
 class ModelTests(TestCase):
@@ -521,3 +529,69 @@ class TagTests(TestCase):
         """Тест: существующий тест для проверки принадлежности к группе."""
         self.assertTrue(has_group(self.user, 'Sellers'))
         self.assertFalse(has_group(self.user, 'Buyers'))
+
+class OrderSuccessTemplateTests(TestCase):
+    """Test suite for the order_success.html template."""
+
+    def setUp(self):
+        """Set up test data for template tests."""
+        # Create a test user.
+        self.user = User.objects.create_user(username='testuser', password='password')
+        # Create a test order.
+        self.order = Order.objects.create(
+            user=self.user,
+            status='Pending',
+            total_price=Decimal('100.00'),
+            discount_applied=Decimal('10.00'),
+            created_at=datetime.now()
+        )
+        # Define the template name for rendering tests.
+        self.template_name = 'shop/order_success.html'
+
+    def test_order_success_view_renders_template(self):
+        """Test that the order_success view renders the correct template."""
+        # Simulate a GET request to the order_success view.
+        response = self.client.get(reverse('order_success'))
+        # Check that the response status code is 200.
+        self.assertEqual(response.status_code, 200)
+        # Verify that the order_success.html template is used.
+        self.assertTemplateUsed(response, 'shop/order_success.html')
+
+    def test_template_displays_order_id(self):
+        """Test that the template displays the order ID when an order is provided."""
+        # Render the template with a context containing the order.
+        rendered = render_to_string(self.template_name, {'order': self.order})
+        # Check that the order ID is displayed in the template.
+        self.assertIn(f"Order ID: #{self.order.id}", rendered)
+        # Verify that the success message is present.
+        self.assertIn("Order Successful!", rendered)
+        self.assertIn("Your order has been placed successfully.", rendered)
+
+    def test_template_handles_missing_order(self):
+        """Test that the template handles cases where no order is provided."""
+        # Render the template with an empty context.
+        rendered = render_to_string(self.template_name, {})
+        # Check that the default order ID (N/A) is displayed.
+        self.assertIn("Order ID: #N/A", rendered)
+        # Verify that the success message is still present.
+        self.assertIn("Order Successful!", rendered)
+
+    def test_continue_shopping_link(self):
+        """Test that the Continue Shopping link points to the product_list URL."""
+        # Render the template with a context containing the order.
+        rendered = render_to_string(self.template_name, {'order': self.order})
+        # Get the expected URL for the product_list view.
+        product_list_url = reverse('product_list')
+        # Check that the Continue Shopping link is present and correct.
+        self.assertIn(f'href="{product_list_url}"', rendered)
+        self.assertIn("Continue Shopping", rendered)
+
+
+    def test_alert_styling(self):
+        """Test that the template includes the success alert with correct styling."""
+        # Render the template with a context containing the order.
+        rendered = render_to_string(self.template_name, {'order': self.order})
+        # Check for the presence of the alert-success class.
+        self.assertIn('class="alert alert-success"', rendered)
+        # Verify the presence of the check-circle icon.
+        self.assertIn('bi-check-circle-fill', rendered)
