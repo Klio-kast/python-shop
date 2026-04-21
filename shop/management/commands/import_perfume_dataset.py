@@ -66,7 +66,7 @@ class Command(BaseCommand):
             image_url = row.get('image_url')
             if image_url and str(image_url).startswith(('http://', 'https://')):
                 try:
-                    r = requests.get(image_url, timeout=15)
+                    r = requests.get(image_url, timeout=120)
                     if r.status_code == 200:
                         filename = os.path.basename(image_url) or f"perfume_{product.id}.jpg"
                         product.image.save(filename, ContentFile(r.content), save=True)
