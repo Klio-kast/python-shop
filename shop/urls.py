@@ -24,4 +24,6 @@ urlpatterns = [
     path('manage_products/', views.manage_products, name='manage_products'),
     # Route requests to the order success view after completing an order.
     path('order_success/', views.order_success, name='order_success'),
+    # Route requests to the notes recommendation page.
+    path('recommend/', views.recommend, name='recommend'),
 ]

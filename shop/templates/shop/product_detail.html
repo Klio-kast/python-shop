@@ -1,19 +1,181 @@
 {% extends 'shop/base.html' %}
 {% block content %}
-<div class="row">
-    <div class="col-md-6">
-        {% if product.image %}
-            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid">
+<style>
+  .sim-card {
+    border: 1px solid #f0f0f0; border-radius: .875rem;
+    transition: box-shadow .2s, transform .2s; height: 100%;
+    text-decoration: none; color: inherit; display: block;
+  }
+  .sim-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,.12);
+    transform: translateY(-3px); color: inherit;
+  }
+  .sim-card-img {
+    height: 140px; border-radius: .875rem .875rem 0 0;
+    overflow: hidden; background: #f5f5f5;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sim-card-img img { width:100%; height:100%; object-fit:cover; }
+  .sim-bar-wrap { height: 4px; background: #eee; border-radius: 2px; }
+  .sim-bar { height: 4px; border-radius: 2px; background: linear-gradient(90deg,#e94560,#f5a623); }
+  .note-pill {
+    display: inline-block; background: #f3f4f6; color: #555;
+    border-radius: 2rem; padding: .12rem .55rem; font-size: .7rem; margin: .1rem;
+  }
+</style>
+
+<div class="row g-5">
+  <!-- Изображение -->
+  <div class="col-md-5">
+    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center"
+         style="min-height:380px; overflow:hidden;">
+      {% if product.image %}
+        <img src="{{ product.image.url }}" alt="{{ product.name }}"
+             class="img-fluid rounded-3" style="max-height:400px;object-fit:contain;">
+      {% elif product.image_url %}
+        <img src="{{ product.image_url }}" alt="{{ product.name }}"
+             class="img-fluid rounded-3" style="max-height:400px;object-fit:contain;"
+             onerror="this.parentElement.innerHTML='<span class=\'fs-1\'>&#x1F9F4;</span>'">
+      {% else %}
+        <span class="fs-1 text-muted">&#x1F9F4;</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Информация -->
+  <div class="col-md-7">
+    <p class="text-muted text-uppercase small fw-semibold mb-1">{{ product.brand.name }}</p>
+    <h2 class="fw-bold mb-2">{{ product.name }}</h2>
+
+    <div class="mb-3 d-flex flex-wrap gap-2">
+      {% if product.gender == 'Male' %}
+        <span class="badge bg-primary fs-6 px-3">Male</span>
+      {% elif product.gender == 'Female' %}
+        <span class="badge bg-danger fs-6 px-3">Female</span>
+      {% elif product.gender == 'Unisex' %}
+        <span class="badge bg-success fs-6 px-3">Unisex</span>
+      {% endif %}
+      {% if product.year %}<span class="badge bg-secondary fs-6 px-3">{{ product.year }}</span>{% endif %}
+      <span class="badge bg-dark fs-6 px-3">{{ product.volume }}ml</span>
+    </div>
+
+    <hr>
+
+    <table class="table table-borderless table-sm mb-3">
+      <tbody>
+        {% if product.category %}
+        <tr><th class="text-muted ps-0" style="width:160px;">Семейство</th>
+            <td>{{ product.category.name }}</td></tr>
         {% endif %}
+        {% if product.subfamily %}
+        <tr><th class="text-muted ps-0">Доминирующий сезон</th>
+            <td>{{ product.subfamily }}</td></tr>
+        {% endif %}
+        {% if product.fragrances %}
+        <tr><th class="text-muted ps-0">Аккорды</th>
+            <td>{{ product.fragrances }}</td></tr>
+        {% endif %}
+        {% if product.origin %}
+        <tr><th class="text-muted ps-0">Страна</th><td>{{ product.origin }}</td></tr>
+        {% endif %}
+        <tr>
+          <th class="text-muted ps-0">В наличии</th>
+          <td>
+            {% if product.stock > 0 %}
+              <span class="text-success fw-semibold">Есть ({{ product.stock }} шт.)</span>
+            {% else %}
+              <span class="text-danger">Нет в наличии</span>
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Ноты по слоям -->
+    {% if product.ingredients %}
+    <div class="mb-3">
+      <h6 class="fw-semibold">Ноты</h6>
+      <div>
+        {% for ingredient in product.ingredients_list %}
+          <span class="note-pill">{{ ingredient }}</span>
+        {% endfor %}
+      </div>
     </div>
-    <div class="col-md-6">
-        <h2>{{ product.name }} ({{ product.volume }}ml)</h2>
-        <p><strong>Brand:</strong> {{ product.brand.name }}</p>
-        <p><strong>Category:</strong> {{ product.category.name }}</p>
-        <p>{{ product.description }}</p>
-        <p><strong>Price:</strong> ${{ final_price }}</p>
-        <p><strong>Stock:</strong> {{ product.stock }} available</p>
-        <a href="{% url 'add_to_cart' product.pk %}" class="btn btn-primary">Add to Cart</a>
+    {% endif %}
+
+    {% if product.description %}
+    <div class="mb-4">
+      <h6 class="fw-semibold">Описание</h6>
+      <p class="text-secondary">{{ product.description }}</p>
     </div>
+    {% endif %}
+
+    <hr>
+    <div class="d-flex align-items-center gap-4 flex-wrap">
+      {% if product.price %}<span class="fs-3 fw-bold">${{ final_price }}</span>{% endif %}
+      <a href="{% url 'add_to_cart' product.pk %}" class="btn btn-dark btn-lg px-4">
+        В корзину
+      </a>
+      <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">Назад</a>
+    </div>
+  </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════
+     Похожие ароматы из нашего каталога (ML)
+═══════════════════════════════════════════════════ -->
+{% if similar %}
+<hr class="my-5">
+<div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h4 class="fw-bold mb-0">Похожие ароматы в каталоге</h4>
+    <p class="text-muted small mb-0">
+      Подобраны моделью по схожести нот и аккордов
+    </p>
+  </div>
+  <a href="{% url 'recommend' %}?q={{ product.ingredients|urlencode }}"
+     class="btn btn-sm btn-outline-dark">
+    Искать по нотам &rarr;
+  </a>
+</div>
+
+<div class="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-3">
+  {% for item in similar %}
+  <div class="col">
+    <a href="{% url 'product_detail' item.product.pk %}" class="sim-card card">
+
+      <!-- Изображение -->
+      <div class="sim-card-img">
+        {% if item.product.image %}
+          <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+        {% elif item.product.image_url %}
+          <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}"
+               onerror="this.parentElement.innerHTML='<span style=font-size:2rem>&#x1F9F4;</span>'">
+        {% else %}
+          <span style="font-size:2rem;">&#x1F9F4;</span>
+        {% endif %}
+      </div>
+
+      <div class="card-body p-2">
+        <p class="text-muted mb-0"
+           style="font-size:.63rem; font-weight:600; text-transform:uppercase; letter-spacing:.3px;">
+          {{ item.product.brand.name }}
+        </p>
+        <p class="fw-semibold mb-1" style="font-size:.82rem; line-height:1.25;">
+          {{ item.product.name }}
+        </p>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span style="font-size:.65rem; color:#aaa;">схожесть</span>
+          <span style="font-size:.7rem; font-weight:700; color:#e94560;">{{ item.score }}%</span>
+        </div>
+        <div class="sim-bar-wrap">
+          <div class="sim-bar" style="width:{{ item.score }}%;"></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% endblock %}

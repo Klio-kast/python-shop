@@ -45,28 +45,28 @@ class Category(models.Model):
         return self.name
 
 # Define the Product model for storing product details.
+# shop/models.py
 class Product(models.Model):
-    """
-    Model representing a product in the shop.
-
-    Stores details about a product, including its name, brand, category, volume, price, and stock level.
-    """
-    # Store the name of the product with a maximum length of 100 characters.
-    name = models.CharField(max_length=100)
-    # Link the product to a brand, deleting the product if the brand is deleted.
+    name = models.CharField(max_length=200)
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
-    # Link the product to a category, deleting the product if the category is deleted.
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    # Store the volume of the product in milliliters as a positive integer.
-    volume = models.PositiveIntegerField()  # in milliliters, e.g., 50, 100
-    # Store a detailed description of the product.
-    description = models.TextField()
-    # Store the price of the product with up to 10 digits and 2 decimal places.
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    # Store the available stock quantity, defaulting to 0.
-    stock = models.PositiveIntegerField(default=0)
-    # Store an optional image for the product, uploaded to the 'products/' directory.
+
+    description = models.TextField(blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    stock = models.PositiveIntegerField(default=50)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
+
+    # Поля из датасета MrBob23/perfume-description
+    top_notes = models.TextField(blank=True)
+    middle_notes = models.TextField(blank=True)
+    base_notes = models.TextField(blank=True)
+    main_accords = models.JSONField(default=dict, blank=True)
+    gender_ratings = models.JSONField(default=dict, blank=True)
+    seasonal_ratings = models.JSONField(default=dict, blank=True)
+    image_url = models.URLField(max_length=500, blank=True, null=True)  # ссылка из датасета
+    volume = models.PositiveIntegerField(null=True, blank=True)
+    def __str__(self):
+        return f"{self.brand} — {self.name}"
 
     def __str__(self):
         """

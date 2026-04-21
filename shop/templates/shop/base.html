@@ -15,26 +15,40 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{% url 'product_list' %}">Perfume Shop</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav" aria-controls="navbarNav"
+                    aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'product_list' %}">Products</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'cart' %}">Cart</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'product_list' %}">Каталог</a>
+                    </li>
+                    <!-- Кнопка рекомендаций -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'recommend' %}">
+                             Подобрать аромат
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'cart' %}">Корзина</a>
+                    </li>
                     {% if user.is_authenticated %}
                         {% if user|has_group:"Sellers" %}
-                            <li class="nav-item"><a class="nav-link" href="{% url 'manage_products' %}">Manage</a></li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'manage_products' %}">Управление</a>
+                            </li>
                         {% endif %}
                         <li class="nav-item">
                             <form method="post" action="{% url 'logout' %}" class="d-inline">
                                 {% csrf_token %}
-                                <button type="submit" class="nav-link btn btn-link">Logout</button>
+                                <button type="submit" class="nav-link btn btn-link">Выйти</button>
                             </form>
                         </li>
                     {% else %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Войти</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Регистрация</a></li>
                     {% endif %}
                 </ul>
             </div>

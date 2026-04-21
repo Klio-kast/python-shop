@@ -1,18 +1,46 @@
 """
-Configuration module for the shop application.
+Configuration for the shop application.
 
-This module defines the configuration class for the shop application, specifying settings for model field behavior and application metadata.
+Автоматический импорт датасета MrBob23/perfume-description при первом запуске runserver.
 """
 from django.apps import AppConfig
+import sys
+import os
 
-# Define the configuration for the shop application.
 class ShopConfig(AppConfig):
-    """
-    Configuration class for the shop application.
-
-    Sets the default auto-increment field type for models and specifies the application name for Django's application registry.
-    """
-    # Specify the default auto-increment field type for model primary keys.
     default_auto_field = 'django.db.models.BigAutoField'
-    # Define the name of the application as recognized by Django.
     name = 'shop'
+
+    def ready(self):
+        """
+        Выполняется при старте приложения.
+        Автоматически запускает импорт датасета только один раз.
+        """
+        # Выполняем только при запуске сервера разработки
+        if 'runserver' not in sys.argv and 'runserver_plus' not in sys.argv:
+            return
+
+        from shop.models import Product
+
+        # Проверяем, был ли уже импорт (файл-флаг)
+        flag_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'import_done.flag')
+
+        if os.path.exists(flag_file):
+            return  # Импорт уже выполнен ранее
+
+        # Если товаров в базе ещё нет — запускаем импорт
+        if Product.objects.count() == 0:
+            print("\n🚀 Запускается автоматический импорт датасета MrBob23/perfume-description...\n")
+
+            try:
+                from django.core.management import call_command
+                # Запускаем команду импорта
+                call_command('import_perfume_dataset', 'perfume_metadata.csv', verbosity=1)
+
+                # Создаём файл-флаг, чтобы импорт больше не повторялся
+                with open(flag_file, 'w') as f:
+                    f.write('import completed')
+
+                print("✅ Импорт датасета успешно завершён! Товары и изображения загружены.\n")
+            except Exception as e:
+                print(f"❌ Ошибка при импорте датасета: {e}")
