@@ -1,19 +1,27 @@
 """
 Template tags for the shop application.
-
-This module defines custom template filters for use in Django templates, enabling additional functionality for rendering dynamic content.
 """
 from django import template
 
-# Initialize the template library for registering custom tags and filters.
 register = template.Library()
 
-# Register a filter to check if a user belongs to a specific group.
+
 @register.filter
 def has_group(user, group_name):
-    """
-    Check if a user is a member of a specified group.
-
-    Returns True if the user belongs to the group with the given name, False otherwise. This filter is useful for conditionally rendering template content based on user group membership.
-    """
+    """Check if a user is a member of a specified group."""
     return user.groups.filter(name=group_name).exists()
+
+
+@register.simple_tag(takes_context=True)
+def page_url(context, page_num):
+    """
+    Build a pagination URL preserving existing GET parameters
+    but replacing the 'page' parameter.
+    Usage: {% page_url 3 %}
+    """
+    request = context.get('request')
+    if request:
+        params = request.GET.copy()
+        params['page'] = str(page_num)
+        return '?' + params.urlencode()
+    return f'?page={page_num}'
